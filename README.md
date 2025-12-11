@@ -23,7 +23,7 @@ Your application brief description.
 # Technical information
 ## Stack
 This application uses the following technologies:
-- C# .Net
+- Java
 - MongoDb
 - Redis
 
