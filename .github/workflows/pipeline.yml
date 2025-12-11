@@ -11,7 +11,7 @@ jobs:
       deployable_branch_name: 'main'
       source_dir_name: 'src'
       manifest_dir_name: 'Infrastructure'
-      custom_service_file_pattern: '*.csproj'
+      custom_service_file_pattern: 'pom.xml'
       build_file_pattern: 'Dockerfile'
       deploy_all_services_label_name: 'deploy all services'
     secrets: inherit
@@ -24,7 +24,7 @@ jobs:
   #     environment: "dev"
   #     source_dir_name: 'src'
   #     manifest_dir_name: 'Infrastructure'
-  #     custom_service_file_pattern: '*.csproj'
+  #     custom_service_file_pattern: 'pom.xml'
   #     build_file_pattern: 'Dockerfile'
   #     img_tag: ${{ needs.ci.outputs.img_tag }}
   #     deploy_all_services_label_name: 'deploy all services'
@@ -38,7 +38,7 @@ jobs:
   #     environment: "qua"
   #     source_dir_name: 'src'
   #     manifest_dir_name: 'Infrastructure'
-  #     custom_service_file_pattern: '*.csproj'
+  #     custom_service_file_pattern: 'pom.xml'
   #     build_file_pattern: 'Dockerfile'
   #     img_tag: ${{ needs.ci.outputs.img_tag }}
   #     deploy_all_services_label_name: 'deploy all services'
@@ -52,7 +52,7 @@ jobs:
   #     environment: "prd"
   #     source_dir_name: 'src'
   #     manifest_dir_name: 'Infrastructure'
-  #     custom_service_file_pattern: '*.csproj'
+  #     custom_service_file_pattern: 'pom.xml'
   #     build_file_pattern: 'Dockerfile'
   #     img_tag: ${{ needs.ci.outputs.img_tag }}
   #     deploy_all_services_label_name: 'deploy all services'
