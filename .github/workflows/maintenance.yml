@@ -12,6 +12,6 @@ jobs:
   maintenance:
     uses: PedroHenriques/ci_cd_workflow_templates/.github/workflows/repo_maintenance.yml@v1
     with:
-      template_type: dotnet
+      template_type: java
       pr_reviewers: PedroHenriques
     secrets: inherit
