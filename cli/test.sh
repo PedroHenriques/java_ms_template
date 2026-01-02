@@ -15,37 +15,16 @@ while [ "$#" -gt 0 ]; do
     -w|--watch) WATCH=1; shift 1;;
     --docker) USE_DOCKER=1; shift 1;;
     --cicd) RUNNING_IN_PIPELINE=1; USE_DOCKER=1; shift 1;;
-    --filter) FILTERS="--filter ${2}"; shift 2;;
-    --unit) FILTERS="--filter Type=Unit"; TEST_TYPE="unit"; shift 1;;
-    --integration) FILTERS="--filter Type=Integration"; TEST_TYPE="integration"; RUN_LOCAL_ENV=1; USE_DOCKER=1; shift 1;;
-    --e2e) FILTERS="--filter Type=E2E"; TEST_TYPE="e2e"; RUN_LOCAL_ENV=1; USE_DOCKER=1; shift 1;;
-    --coverage) COVERAGE="--collect:\"XPlat Code Coverage\" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover"; FILTERS="--filter Type=Unit"; TEST_TYPE="unit"; shift 1;;
+    --filter) FILTERS="${2}"; shift 2;;
+    --unit) FILTERS="-DtestTags=Unit"; TEST_TYPE="unit"; shift 1;;
+    --integration) FILTERS="-DtestTags=Integration"; TEST_TYPE="integration"; RUN_LOCAL_ENV=1; USE_DOCKER=1; shift 1;;
+    --e2e) FILTERS="-DtestTags=E2E"; TEST_TYPE="e2e"; RUN_LOCAL_ENV=1; USE_DOCKER=1; shift 1;;
+    --coverage) COVERAGE="--collect:\"XPlat Code Coverage\" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover"; FILTERS="-DtestTags=Unit"; TEST_TYPE="unit"; shift 1;;
 
     -*) echo "unknown option: $1" >&2; exit 1;;
     *) PROJ=$1; shift 1;;
   esac
 done
-
-case "${TEST_TYPE}" in
-  "unit")
-    if [ ! -d "./test/unit/" ]; then
-      echo "No './test/unit/' directory found. Assuming no unit tests exist.";
-      exit 0;
-    fi
-    ;;
-  "integration")
-    if [ ! -d "./test/integration/" ]; then
-      echo "No './test/integration/' directory found. Assuming no integration tests exist.";
-      exit 0;
-    fi
-    ;;
-  "e2e")
-    if [ ! -d "./test/e2e/" ]; then
-      echo "No './test/e2e/' directory found. Assuming no e2e tests exist.";
-      exit 0;
-    fi
-    ;;
-esac
 
 if [ $RUN_LOCAL_ENV -eq 1 ]; then
   if [ -f ./setup/local/.env.test ]; then
@@ -111,14 +90,26 @@ else
   docker network create myapp_shared || true;
 fi
 
-CMD="dotnet test ${FILTERS} ${COVERAGE} ${PROJ}";
+PROJ_ARGS="";
+if [ -n "$PROJ" ]; then
+  PROJ_ARGS="-pl ${PROJ} -am";
+fi
+
+CMD="mvn -B ${PROJ_ARGS} test ${FILTERS} ${COVERAGE}";
 
 if [ $WATCH -eq 1 ]; then
   if [ -z "$PROJ" ]; then
     echo "In watch mode a project name or path must be provided as argument." >&2; exit 1;
   fi
 
-  CMD="dotnet watch test -q --project ${PROJ} ${FILTERS}";
+  if ! command -v entr >/dev/null 2>&1; then
+    echo "In watch mode you need 'entr' installed (e.g., apt-get install entr / brew install entr)." >&2; exit 1;
+  fi
+
+  echo "Watch mode enabled. Re-running on changes under ${PROJ}/src ...";
+  find "${PROJ}/src/main" "${PROJ}/src/test" -type f \( -name "*.java" -o -name "*.xml" -o -name "*.properties" -o -name "*.yml" -o -name "*.yaml" \) | entr -r /bin/sh -lc "${CMD}";
+
+  exit 0;
 fi
 
 if [ $USE_DOCKER -eq 1 ]; then
@@ -127,11 +118,10 @@ if [ $USE_DOCKER -eq 1 ]; then
     INTERACTIVE_FLAGS="-i";
   fi
 
-  docker run --rm ${INTERACTIVE_FLAGS} --name myapp_test_runner --network=myapp_shared -v "./:/app/" -w "/app/" mcr.microsoft.com/dotnet/sdk:8.0-noble /bin/sh -lc "${CMD}";
+  docker run --rm ${INTERACTIVE_FLAGS} --name myapp_test_runner --network=myapp_shared -v "./:/app/" -w "/app/" maven:3.9-eclipse-temurin-21 /bin/sh -lc "${CMD}";
 
   if [ $RUNNING_IN_PIPELINE -eq 0 ]; then
-    find src test -type d \( -name bin -o -name obj \) -prune -exec rm -rf {} \;
-    dotnet restore;
+    find src -type d -name target -prune -exec rm -rf {} \; 2>/dev/null || true;
   fi
 else
   eval "${CMD}";
