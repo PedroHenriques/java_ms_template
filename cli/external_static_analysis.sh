@@ -1,8 +1,8 @@
 #!/bin/sh
 set -e;
 
-: "${SONAR_QG_WAIT:=true}"
-: "${SONAR_QG_TIMEOUT_SEC:=600}"
+: "${SONAR_QG_WAIT:=true}";
+: "${SONAR_QG_TIMEOUT_SEC:=600}";
 
 USE_DOCKER=0;
 RUNNING_IN_PIPELINE=0;
@@ -30,9 +30,9 @@ if [ -z "${PR_KEY}" ] && [ -n "${GITHUB_REF:-}" ]; then
 fi
 
 if [ -n "${PR_KEY}" ]; then
-  EXTRA_OPTS="$EXTRA_OPTS /d:sonar.pullrequest.key=${PR_KEY} /d:sonar.pullrequest.branch=${GITHUB_HEAD_REF} /d:sonar.pullrequest.base=${GITHUB_BASE_REF}";
+  EXTRA_OPTS="$EXTRA_OPTS -Dsonar.pullrequest.key=${PR_KEY} -Dsonar.pullrequest.branch=${GITHUB_HEAD_REF} -Dsonar.pullrequest.base=${GITHUB_BASE_REF}";
 else
-  EXTRA_OPTS="$EXTRA_OPTS /d:sonar.branch.name=${GITHUB_REF_NAME}";
+  EXTRA_OPTS="$EXTRA_OPTS -Dsonar.branch.name=${GITHUB_REF_NAME}";
 fi
 
 TEST_COVERAGE_PATH="**/target/site/jacoco/jacoco.xml";
