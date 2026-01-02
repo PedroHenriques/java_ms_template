@@ -2,7 +2,6 @@
 set -e;
 
 : "${TEST_COVERAGE_DIR_PATH:=coverageReport}";
-: "${TEST_COVERAGE_FILE_NAME:=coverage.opencover.xml}";
 
 USE_DOCKER=0;
 RUNNING_IN_PIPELINE=0;
@@ -29,19 +28,17 @@ if [ $USE_DOCKER -eq 0 ]; then
   rm -rf ./${TEST_COVERAGE_DIR_PATH};
 fi
 
-find . -type d -name "TestResults" -exec rm -rf {} +;
+find . -type f -name "jacoco.exec" -delete 2>/dev/null || true;
+find . -type d -path "*/target/site/jacoco" -prune -exec rm -rf {} \; 2>/dev/null || true;
 
 sh ./cli/test.sh --coverage $DOCKER_FLAG $CICD_FLAG;
 
-CMD="dotnet tool restore; dotnet reportgenerator -reports:\"./test/**/${TEST_COVERAGE_FILE_NAME}\" -targetdir:\"${TEST_COVERAGE_DIR_PATH}\" -reporttypes:Html;";
+mkdir -p "./${TEST_COVERAGE_DIR_PATH}";
 
-if [ $USE_DOCKER -eq 1 ]; then
-  INTERACTIVE_FLAGS="-it";
-  if [ $RUNNING_IN_PIPELINE -eq 1 ]; then
-    INTERACTIVE_FLAGS="-i";
-  fi
-
-  docker run --rm ${INTERACTIVE_FLAGS} -v "./:/app/" -w "/app/" mcr.microsoft.com/dotnet/sdk:8.0-noble /bin/sh -c "${CMD}";
-else
-  eval "${CMD}";
-fi
+# Copy every module's JaCoCo HTML report
+for report in $(find . -type f -path "*/target/site/jacoco/index.html" 2>/dev/null); do
+  mod="$(echo "$report" | sed 's#^\./##' | sed 's#/target/site/jacoco/index.html##')";
+  out="./${TEST_COVERAGE_DIR_PATH}/${mod}";
+  mkdir -p "$out";
+  cp -R "$(dirname "$report")"/* "$out"/;
+done

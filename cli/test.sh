@@ -19,7 +19,7 @@ while [ "$#" -gt 0 ]; do
     --unit) FILTERS="-DtestTags=Unit"; TEST_TYPE="unit"; shift 1;;
     --integration) FILTERS="-DtestTags=Integration"; TEST_TYPE="integration"; RUN_LOCAL_ENV=1; USE_DOCKER=1; shift 1;;
     --e2e) FILTERS="-DtestTags=E2E"; TEST_TYPE="e2e"; RUN_LOCAL_ENV=1; USE_DOCKER=1; shift 1;;
-    --coverage) COVERAGE="--collect:\"XPlat Code Coverage\" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover"; FILTERS="-DtestTags=Unit"; TEST_TYPE="unit"; shift 1;;
+    --coverage) COVERAGE="-Pcoverage"; FILTERS="-DtestTags=Unit"; TEST_TYPE="unit"; shift 1;;
 
     -*) echo "unknown option: $1" >&2; exit 1;;
     *) PROJ=$1; shift 1;;
