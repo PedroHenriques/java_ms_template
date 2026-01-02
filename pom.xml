@@ -46,7 +46,6 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>3.2.5</version>
           <configuration>
-            <!-- JUnit 5 tags (Surefire maps groups -> include tags) -->
             <groups>${testTags}</groups>
           </configuration>
         </plugin>
@@ -63,6 +62,12 @@
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
             <version>0.8.12</version>
+
+            <configuration>
+              <!-- Ensure XML report is generated for Sonar -->
+              <outputDirectory>${project.reporting.outputDirectory}/jacoco</outputDirectory>
+            </configuration>
+
             <executions>
               <execution>
                 <id>prepare-agent</id>

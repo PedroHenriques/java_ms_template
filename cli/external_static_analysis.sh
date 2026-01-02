@@ -16,7 +16,7 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-rm -rf .sonarqube;
+rm -rf .scannerwork;
 
 EXTRA_OPTS="";
 PR_KEY="";
@@ -35,8 +35,8 @@ else
   EXTRA_OPTS="$EXTRA_OPTS /d:sonar.branch.name=${GITHUB_REF_NAME}";
 fi
 
-TEST_COVERAGE_PATH="./test/**/${TEST_COVERAGE_FILE_NAME}";
-CMD="dotnet tool restore && dotnet sonarscanner begin /k:"${EXTERNAL_STATIC_ANALYSIS_PROJ_KEY}" /o:"${EXTERNAL_STATIC_ANALYSIS_ORG}" /d:sonar.token="${EXTERNAL_STATIC_ANALYSIS_TOKEN}" /d:sonar.host.url="${EXTERNAL_STATIC_ANALYSIS_HOST}" /d:sonar.cs.opencover.reportsPaths="${TEST_COVERAGE_PATH}" /d:sonar.projectBaseDir=/app /d:sonar.exclusions=**/bin/**,**/obj/**,setup/**,app/setup/** /d:sonar.coverage.exclusions=setup/**,app/setup/** ${EXTRA_OPTS} /d:sonar.qualitygate.wait=${SONAR_QG_WAIT} /d:sonar.qualitygate.timeout=${SONAR_QG_TIMEOUT_SEC} && dotnet build && chmod +x ./cli/test.sh && ./cli/test.sh --coverage && dotnet sonarscanner end /d:sonar.token="${EXTERNAL_STATIC_ANALYSIS_TOKEN}"";
+TEST_COVERAGE_PATH="**/target/site/jacoco/jacoco.xml";
+CMD="chmod +x ./cli/test.sh && ./cli/test.sh --coverage && mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=${EXTERNAL_STATIC_ANALYSIS_PROJ_KEY} -Dsonar.organization=${EXTERNAL_STATIC_ANALYSIS_ORG} -Dsonar.token=${EXTERNAL_STATIC_ANALYSIS_TOKEN} -Dsonar.host.url=${EXTERNAL_STATIC_ANALYSIS_HOST} -Dsonar.coverage.jacoco.xmlReportPaths=${TEST_COVERAGE_PATH} -Dsonar.exclusions=**/target/**,setup/**,app/setup/** -Dsonar.coverage.exclusions=setup/**,app/setup/** ${EXTRA_OPTS} -Dsonar.qualitygate.wait=${SONAR_QG_WAIT} -Dsonar.qualitygate.timeout=${SONAR_QG_TIMEOUT_SEC}";
 
 if [ $USE_DOCKER -eq 1 ]; then
   INTERACTIVE_FLAGS="-it";
@@ -44,7 +44,7 @@ if [ $USE_DOCKER -eq 1 ]; then
     INTERACTIVE_FLAGS="-i";
   fi
 
-  docker run --rm ${INTERACTIVE_FLAGS} -v "./:/app/" -w "/app/" mcr.microsoft.com/dotnet/sdk:8.0-noble /bin/sh -c "${CMD}";
+  docker run --rm ${INTERACTIVE_FLAGS} -v "./:/app/" -w "/app/" maven:3.9-eclipse-temurin-21 /bin/sh -c "${CMD}";
 else
   eval "${CMD}";
 fi
